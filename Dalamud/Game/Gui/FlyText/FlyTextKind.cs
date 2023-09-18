@@ -16,20 +16,20 @@ public enum FlyTextKind : int
     /// Val1 in serif font, Text2 in sans-serif as subtitle.
     /// Does a bounce effect on appearance.
     /// </summary>
-    AutoAttackOrDotCrit = 1,
+    AutoAttackOrDotDh = 1,
 
     /// <summary>
     /// Val1 in larger serif font with exclamation, with Text2 in sans-serif as subtitle.
     /// Does a bigger bounce effect on appearance.
     /// </summary>
-    AutoAttackOrDotCritDh = 2,
+    AutoAttackOrDotCrit = 2,
 
     /// <summary>
     /// Val1 in even larger serif font with 2 exclamations, Text2 in
     /// sans-serif as subtitle. Does a large bounce effect on appearance.
     /// Does not scroll up or down the screen.
     /// </summary>
-    AutoAttackOrDotDh = 3,
+    AutoAttackOrDotCritDh = 3,
 
     /// <summary>
     /// AutoAttack with sans-serif Text1 to the left of the Val1.
