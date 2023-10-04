@@ -2832,68 +2832,66 @@ internal class PluginInstallerWindow : Window, IDisposable
 
         var pluginManager = Service<PluginManager>.Get();
 
-        var devNotDeletable = plugin.IsDev && plugin.State != PluginState.Unloaded && plugin.State != PluginState.DependencyResolutionFailed;
+        var isRemovable = !plugin.HasEverStartedLoad || plugin.State is PluginState.Unloaded or PluginState.DependencyResolutionFailed;
+        var isDevNotRemovable = plugin.IsDev && !isRemovable;
+        var isButtonDisabled = plugin.State == PluginState.Loaded || isDevNotRemovable;
 
         ImGui.SameLine();
-        if (plugin.State == PluginState.Loaded || devNotDeletable)
+        if (isButtonDisabled)
         {
-            ImGui.PushFont(InterfaceManager.IconFont);
-            ImGuiComponents.DisabledButton(FontAwesomeIcon.TrashAlt.ToIconString());
-            ImGui.PopFont();
-
-            if (ImGui.IsItemHovered())
-            {
-                ImGui.SetTooltip(plugin.State == PluginState.Loaded
-                                     ? Locs.PluginButtonToolTip_DeletePluginLoaded
-                                     : Locs.PluginButtonToolTip_DeletePluginRestricted);
-            }
+            ImGuiComponents.DisabledButton(FontAwesomeIcon.TrashAlt);
         }
-        else
+        else if (ImGuiComponents.IconButton(FontAwesomeIcon.TrashAlt))
         {
-            if (ImGuiComponents.IconButton(FontAwesomeIcon.TrashAlt))
+            try
             {
-                try
+                if (plugin.IsDev)
                 {
-                    if (plugin.IsDev)
-                    {
-                        plugin.DllFile.Delete();
-                    }
-                    else
-                    {
-                        plugin.ScheduleDeletion(!plugin.Manifest.ScheduledForDeletion);
-                    }
-
-                    if (plugin.State is PluginState.Unloaded or PluginState.DependencyResolutionFailed)
-                    {
-                        pluginManager.RemovePlugin(plugin);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, $"Plugin installer threw an error during removal of {plugin.Name}");
-
-                    this.ShowErrorModal(Locs.ErrorModal_DeleteFail(plugin.Name));
-                }
-            }
-
-            if (ImGui.IsItemHovered())
-            {
-                string tooltipMessage;
-                if (plugin.Manifest.ScheduledForDeletion)
-                {
-                    tooltipMessage = Locs.PluginButtonToolTip_DeletePluginScheduledCancel;
-                }
-                else if (plugin.State is PluginState.Unloaded or PluginState.DependencyResolutionFailed)
-                {
-                    tooltipMessage = Locs.PluginButtonToolTip_DeletePlugin;
+                    plugin.DllFile.Delete();
                 }
                 else
                 {
-                    tooltipMessage = Locs.PluginButtonToolTip_DeletePluginScheduled;
+                    plugin.ScheduleDeletion(!plugin.Manifest.ScheduledForDeletion);
                 }
 
-                ImGui.SetTooltip(tooltipMessage);
+                if (isRemovable)
+                {
+                    pluginManager.RemovePlugin(plugin);
+                }
             }
+            catch (Exception ex)
+            {
+                Log.Error(ex, $"Plugin installer threw an error during removal of {plugin.Name}");
+
+                this.ShowErrorModal(Locs.ErrorModal_DeleteFail(plugin.Name));
+            }
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            string tooltipMessage;
+            if (plugin.State == PluginState.Loaded)
+            {
+                tooltipMessage = Locs.PluginButtonToolTip_DeletePluginLoaded;
+            }
+            else if (isDevNotRemovable)
+            {
+                tooltipMessage = Locs.PluginButtonToolTip_DeletePluginRestricted;
+            }
+            else if (plugin.Manifest.ScheduledForDeletion)
+            {
+                tooltipMessage = Locs.PluginButtonToolTip_DeletePluginScheduledCancel;
+            }
+            else if (!isRemovable)
+            {
+                tooltipMessage = Locs.PluginButtonToolTip_DeletePluginScheduled;
+            }
+            else
+            {
+                tooltipMessage = Locs.PluginButtonToolTip_DeletePlugin;
+            }
+
+            ImGui.SetTooltip(tooltipMessage);
         }
     }
 
